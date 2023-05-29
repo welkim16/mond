@@ -1,6 +1,5 @@
 from django.db import models
 
-# Create your models here.
 class JobFunctions(models.Model):
     # function=models.ForeignKey(Jobs, related_name='job_functions', on_delete=models.CASCADE)
     jobFunction=models.TextField(max_length=200)
