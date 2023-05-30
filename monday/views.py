@@ -69,14 +69,24 @@ if page.status_code==200:
         for wen in wens:
             job_link = wen.find('a',class_='relative mb-3 text-lg font-medium break-words focus:outline-none metrics-apply-now text-link-500 text-loading-animate')['href']
             job_title = wen.find('p').text.strip()
-             # Find the paragraph element by class name
+            # Find the paragraph element by class name
             job_response = requests.get(job_link)
             job_soup = BeautifulSoup(job_response.content, 'html.parser')
+
+            # Update the CSS selector to accurately target the paragraph element
             paragraph = job_soup.find('p', class_='text-sm text-gray-500 text-loading-animate inline-block')
-            paragraph_text = paragraph.get_text()
-            colon_index = paragraph_text.find(':')
-            extracted_text = paragraph_text[colon_index + 1:].strip()
-            Job_function_name=extracted_text
+
+            if paragraph is not None:
+                paragraph_text = paragraph.get_text(strip=True)
+                colon_index = paragraph_text.find(':')
+
+                if colon_index != -1:
+                    Job_function_name = paragraph_text[colon_index + 1:].strip()
+                else:
+                    Job_function_name = paragraph_text
+            else:
+                Job_function_name = None  # Handle the case when the paragraph element is not found
+
             
             jtype=job_soup.find('div',class_='mt-3')
             job_type_name = jtype.find('span',class_='text-sm font-normal px-3 rounded bg-brand-secondary-50 mr-2 mb-3 inline-block').find('a').get_text(strip=True)
@@ -88,7 +98,8 @@ if page.status_code==200:
             
             location, _ = Location.objects.get_or_create(location=location_name)
             job_type, _ = Type.objects.get_or_create(time=job_type_name)
-            job_function, _ = JobFunctions.objects.get_or_create(jobFunction=Job_function_name)
+            job_function, _ = JobFunctions.objects.get_or_create(jobFunction__iexact=Job_function_name.strip())
+
             industry, _ = Industries.objects.get_or_create(industry=Industry_name)
             
             new_job = Jobs(
@@ -100,7 +111,7 @@ if page.status_code==200:
             industries=industry)
             
             new_job.save()
-                  
+                
             # job_response = requests.get(job_link)
             # job_soup = BeautifulSoup(job_response.content, 'html.parser')
             summary=job_soup.find('div',class_='py-5 px-4 border-b border-gray-300 md:p-5')
